@@ -1,16 +1,11 @@
 import re
 import pymysql
 import requests
+import os
 
-# MySQL database connection details
-DB_HOST = 'mariadb'
-DB_USER = 'daniel'
-DB_PASSWORD = 'daniel'
-DB_NAME = 'xtream_code'
-
-USER_NAME = '8504f56cf0'
-PASSWORD = 'e0737c5414'
-
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
 
 # Text patterns to remove from name
 patterns_to_remove = [
@@ -37,12 +32,12 @@ def remove_patterns(name):
     return name.strip()
 
 # Function to connect to the database and save data
-def save_to_database(data, allowed_category_ids):
+def save_to_database(data, allowed_category_ids, db_host, db_user, db_password, db_name):
     try:
-        connection = pymysql.connect(host=DB_HOST,
-                                     user=DB_USER,
-                                     password=DB_PASSWORD,
-                                     database=DB_NAME,
+        connection = pymysql.connect(host=db_host,
+                                     user=db_user,
+                                     password=db_password,
+                                     database=db_name,
                                      cursorclass=pymysql.cursors.DictCursor)
 
         with connection.cursor() as cursor:
@@ -69,8 +64,8 @@ def save_to_database(data, allowed_category_ids):
 allowed_category_ids = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,33}
 
 # Function to fetch JSON data from external server
-def fetch_json_data():
-    url = 'http://iptvsub1-elite.com/player_api.php?username={}&password={}&action=get_live_streams'.format(USER_NAME, PASSWORD)
+def fetch_json_data(username, password):
+    url = 'http://iptvsub1-elite.com/player_api.php?username={}&password={}&action=get_live_streams'.format(username, password)
 
     # Make HTTP GET request
     response = requests.get(url)
@@ -83,10 +78,19 @@ def fetch_json_data():
         print(f"Failed to fetch JSON data. Status code: {response.status_code}")
         return None
 
-# Parse JSON data
-json_data = fetch_json_data()
+# Get MySQL database connection details from environment variables
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+USER_NAME = os.getenv("USER_NAME")
+PASSWORD = os.getenv("PASSWORD")
+
+# Fetch JSON data
+json_data = fetch_json_data(USER_NAME, PASSWORD)
 
 # Save to database
-save_to_database(json_data, allowed_category_ids)
+save_to_database(json_data, allowed_category_ids, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 
 print("Data saved to database.")
