@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  api:
+    build: .
+    ports:
+      - "${PORT}:5000"  # El puerto puede ser configurado con una variable de entorno
+      # - "3000:3000"  # Puerto de depuración
+    environment:
+      # - DEBUG=true  # Variable de entorno para habilitar el modo de depuración
+      - PORT=${PORT}
+      - MYSQL_HOST=${MYSQL_HOST}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - SERVER_IP=${SERVER_IP}
+      # - FLASK_ENV=development
+    volumes:
+      - ./xml:/app/xml
+    depends_on:
+      - mariadb
+    command: sh -c "sleep 10 && python app.py"  # Agrega un tiempo de espera de 30 segundos antes de ejecutar la aplicación
+    networks:
+      - stream_codes
+
+  mariadb:
+    image: mariadb:latest
+    ports:
+      - "3306:3306" # Only enabled on development
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Monta el script SQL como un entrypoint para inicializar la base de datos
+      - mariadb_data:/var/lib/mysql  # Agrega un volumen para persistir los datos de la base de datos
+    networks:
+      - stream_codes
+
+volumes:
+  mariadb_data:  # Define el volumen para persistir los datos de la base de datos
+
+networks:
+  stream_codes:
+    external: true

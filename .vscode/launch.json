@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Flask API",
+            "type": "python",
+            "request": "attach",
+            "port": 3000,
+            "host": "localhost",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/app"
+                }
+            ],
+            "preLaunchTask": "docker-compose-up",
+            "postDebugTask": "docker-compose-down"
+        }
+    ]
+}
+
