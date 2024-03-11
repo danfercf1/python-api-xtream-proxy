@@ -1,6 +1,5 @@
 import os
 import json
-import random
 import pymysql
 
 # Obtener las variables de entorno
@@ -12,7 +11,8 @@ PORT = os.environ.get('PORT')
 SERVER_IP = os.environ.get('SERVER_IP')
 
 class Database:
-    def __init__(self):
+    def __init__(self, app):
+        self.app = app
         self.host = MYSQL_HOST
         self.user = MYSQL_USER
         self.password = MYSQL_PASSWORD
@@ -58,7 +58,7 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM users WHERE username = %s AND password = %s"
+                sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s"
                 cursor.execute(sql, (user, passw,))
                 result = cursor.fetchone()
                 if result:

@@ -7,7 +7,7 @@ from api import Api
 #  TODO EPG action=get_simple_data_table&stream_id=id Perfect player APP
 
 app = Flask(__name__)
-db = Database()
+db = Database(app)
 api = Api(db)
 
 # Obtener las variables de entorno
