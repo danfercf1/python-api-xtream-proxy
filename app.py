@@ -3,14 +3,12 @@ from flask import Flask, request, jsonify, redirect, send_file
 import os
 from database import Database
 from api import Api
-from tools import Tools
 
 #  TODO EPG action=get_simple_data_table&stream_id=id Perfect player APP
 
 app = Flask(__name__)
 db = Database()
 api = Api(db)
-tool = Tools()
 
 # Obtener las variables de entorno
 PORT = os.environ.get('port') or 5000
@@ -70,13 +68,8 @@ def player_api():
         return jsonify(user_info)
     else:
         if action == "get_live_categories":
-            categories_from_server = api.get_categories(username, password)
-            categories_from_server_removed = tool.remove_categories_by_name(categories_from_server.json())
             categories_from_db = db.get_all_stream_categories()
-
-            merged_categories = tool.merge_categories(categories_from_server_removed, categories_from_db)
-            
-            return jsonify(merged_categories)
+            return jsonify(categories_from_db)
         elif action == "get_live_streams":
             if category_id:
                 live_stream = db.get_all_streams_by_category(category_id)
