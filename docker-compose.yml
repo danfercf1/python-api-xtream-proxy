@@ -43,5 +43,6 @@ volumes:
   mariadb_data:  # Define el volumen para persistir los datos de la base de datos
 
 networks:
-  stream_codes:
+  default:
+    name: ghost-services
     external: true
