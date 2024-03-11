@@ -127,18 +127,16 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                # Ejecutar la consulta SQL para obtener todas las URLs
-                cursor.execute("SELECT dns_url FROM server_dns")
-                urls = cursor.fetchall()
-                
-                if urls:
-                    # Seleccionar una URL aleatoria de las obtenidas
-                    random_url = random.choice(urls)[0]
-                    return random_url
-                else:
+                try:
+                    sql = "SELECT dns_url FROM server_dns ORDER BY RAND() LIMIT 1"
+                    cursor.execute(sql)
+                    url = cursor.fetchone()[0]
+                    return url
+                except:
                     return 'http://iptvsub1-elite.com'
         finally:
             connection.close()
+
     
     def get_all_stream_categories(self):
         connection = self.connect()
