@@ -130,10 +130,13 @@ class Database:
                 # Ejecutar la consulta SQL para obtener todas las URLs
                 cursor.execute("SELECT dns_url FROM server_dns")
                 urls = cursor.fetchall()
-
-                # Seleccionar una URL aleatoria de las obtenidas
-                random_url = random.choice(urls)[0]
-                return random_url
+                
+                if urls:
+                    # Seleccionar una URL aleatoria de las obtenidas
+                    random_url = random.choice(urls)[0]
+                    return random_url
+                else:
+                    return 'http://iptvsub1-elite.com'
         finally:
             connection.close()
     
