@@ -37,7 +37,7 @@ services:
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Monta el script SQL como un entrypoint para inicializar la base de datos
       - mariadb_data:/var/lib/mysql  # Agrega un volumen para persistir los datos de la base de datos
     networks:
-      - stream_codes
+      - ghost-services
 
 volumes:
   mariadb_data:  # Define el volumen para persistir los datos de la base de datos
