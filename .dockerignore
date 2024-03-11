@@ -1,0 +1,17 @@
+# Ignorar archivos de caché
+.dockerignore
+.gitignore
+
+# Ignorar directorios de dependencias de desarrollo
+node_modules
+venv
+
+# Ignorar archivos de respaldo
+*.bak
+*.backup
+
+# Ignorar archivos sensibles
+secrets.txt
+Dockerfile
+.env
+*.log
