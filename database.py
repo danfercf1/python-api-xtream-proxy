@@ -1,6 +1,7 @@
 import os
 import json
 import pymysql
+from datetime import datetime
 
 # Obtener las variables de entorno
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
@@ -28,6 +29,25 @@ class Database:
             database=self.database
         )
         
+    def is_expired(user_info_result):
+        # Extract the user_info attribute from the MySQL tuple
+        user_info_json_text = user_info_result["user_info"]
+
+        # Parse the JSON text to a Python dictionary
+        user_info = json.loads(user_info_json_text)
+
+        # Extract the value of the "exp_date" key and convert it to an integer (timestamp)
+        exp_date_timestamp = int(user_info.get("exp_date", 0))
+
+        # Get the current timestamp
+        current_timestamp = int(datetime.now().timestamp())
+
+        # Compare the expiration timestamp with the current timestamp
+        if exp_date_timestamp <= current_timestamp:
+            return True
+        else:
+            return False
+    
     # Esta función verifica si un usuario existe en la base de datos
 
     def user_exists(self, username, password):
@@ -58,7 +78,7 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s"
+                sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s AND status = 'Active'"
                 cursor.execute(sql, (user, passw,))
                 result = cursor.fetchone()
                 if result:
@@ -115,7 +135,6 @@ class Database:
             connection.close()
 
 
-
     def verify_authentication(self, username, password):
         if not self.user_exists(username, password):
             return False
@@ -142,7 +161,7 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM stream_categories"
+                sql = "SELECT * FROM stream_categories WHERE status = 'Active'"
                 cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
@@ -163,7 +182,8 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM streams"
+                sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active'"
                 cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
@@ -195,7 +215,8 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM streams WHERE category_id = %s"
+                sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' AND category_id = %s"
                 cursor.execute(sql, (category_id,))
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()

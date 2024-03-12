@@ -11,7 +11,8 @@ db = Database(app)
 api = Api(db)
 
 # Obtener las variables de entorno
-PORT = os.environ.get('port') or 5000
+PORT = os.environ.get('PORT') or 5000
+DEBUG = os.environ.get('DEBUG') or False
 
 # Endpoints
 # Endpoint que redirecciona a otra URL reemplazando la URL original y agregando el resto del path
@@ -92,4 +93,4 @@ def player_api():
                 return redirect(nueva_url_redireccion)
 
 if __name__ == "__main__":
-    app.run(debug=False, host='0.0.0.0', port=PORT)
+    app.run(debug=DEBUG, host='0.0.0.0', port=PORT)
