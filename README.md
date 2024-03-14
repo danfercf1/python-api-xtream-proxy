@@ -28,7 +28,7 @@ docker exec <container_id> sh -c 'exec mariadb -uroot -p<password> xtream_code <
 Add the livestream category cronjob to run every day using crontab -e
 
 ```bash
-0 0 * * 0 docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_categories.py >> /var/log/sync_data_live_categories.log 2>&1
+0 0 * * 0 docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_categories.py >> ~/logs/sync_data_live_categories.log 2>&1
 ```
 
 Check if the crontab is added
@@ -40,7 +40,7 @@ crontab -l
 Add the livestream cronjob to run every week using crontab -e
 
 ```bash
-0 0 * * * docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_categories.py >> /var/log/sync_data_live_categories.log 2>&1
+0 0 * * * docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_streams.py >> /logs/sync_data_live_streams.log 2>&1
 ```
 
 Check if the crontab is added
