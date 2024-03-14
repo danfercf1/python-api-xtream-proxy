@@ -15,12 +15,15 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
       - SERVER_IP=${SERVER_IP}
+      - USERNAME=${USERNAME}
+      - PASSWORD=${PASSWORD}
       # - FLASK_ENV=development
     volumes:
       - ./xml:/app/xml
     depends_on:
       - mariadb
-    command: sh -c "sleep 10 && python app.py"  # Agrega un tiempo de espera de 30 segundos antes de ejecutar la aplicación
+    dns:
+      - 8.8.8.8
 
   mariadb:
     image: mariadb:latest

@@ -22,3 +22,29 @@ Then restore the database
 ```bash
 docker exec <container_id> sh -c 'exec mariadb -uroot -p<password> xtream_code < /2024-03-11_backup.sql'
 ```
+
+## Add the crontab configuration to run the update scripts
+
+Add the livestream category cronjob to run every day using crontab -e
+
+```bash
+0 0 * * 0 docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_categories.py >> /var/log/sync_data_live_categories.log 2>&1
+```
+
+Check if the crontab is added
+
+```bash
+crontab -l
+```
+
+Add the livestream cronjob to run every week using crontab -e
+
+```bash
+0 0 * * * docker exec python-api-xtream-proxy-api-1 python ./sync/sync_data_live_categories.py >> /var/log/sync_data_live_categories.log 2>&1
+```
+
+Check if the crontab is added
+
+```bash
+crontab -l
+```
