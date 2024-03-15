@@ -56,7 +56,7 @@ def save_to_database(data, allowed_category_ids, db_host, db_user, db_password, 
                         
                         cursor.execute("UPDATE streams SET added=%s, category_id=%s, custom_sid=%s, direct_source=%s, epg_channel_id=%s, is_adult=%s, num=%s, stream_icon=%s, name=%s, stream_type=%s, tv_archive=%s, tv_archive_duration=%s WHERE stream_id=%s",
                                        (item['added'], category, item['custom_sid'], item['direct_source'], item['epg_channel_id'], item['is_adult'], item['num'], item['stream_icon'], item['name'], item['stream_type'], item['tv_archive'], item['tv_archive_duration'], item['stream_id']))
-			print(f"Data ==> Stream ID: {item['stream_id']}, Name: {item['name']}")
+                        print(f"Data ==> Stream ID: {item['stream_id']}, Name: {item['name']}")
                 else:
                     cursor.execute("INSERT INTO streams (name, added, category_id, custom_sid, direct_source, epg_channel_id, is_adult, num, stream_icon, stream_id, stream_type, tv_archive, tv_archive_duration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                                    (new_name, item['added'], category, item['custom_sid'], item['direct_source'], item['epg_channel_id'], item['is_adult'], item['num'], item['stream_icon'], item['stream_id'], item['stream_type'], item['tv_archive'], item['tv_archive_duration']))
