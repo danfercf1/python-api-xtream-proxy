@@ -161,7 +161,7 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM stream_categories WHERE status = 'Active'"
+                sql = "SELECT * FROM stream_categories WHERE status = 'Active' ORDER BY cat_order ASC"
                 cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
@@ -183,7 +183,7 @@ class Database:
         try:
             with connection.cursor() as cursor:
                 sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
-                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active'"
+                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' ORDER BY st.name ASC"
                 cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
@@ -216,7 +216,7 @@ class Database:
         try:
             with connection.cursor() as cursor:
                 sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
-                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' AND category_id = %s"
+                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' AND category_id = %s ORDER BY st.name ASC"
                 cursor.execute(sql, (category_id,))
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
