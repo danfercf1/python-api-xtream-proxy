@@ -27,7 +27,7 @@ stream_handler.setFormatter(formatter)
 logging.getLogger().addHandler(file_handler)
 logging.getLogger().addHandler(stream_handler)
 
-# Function to check if category exists in the database
+# Function to check if category exists in the database, test
 def category_exists(cursor, category_name):
     cursor.execute("SELECT COUNT(*) FROM stream_categories WHERE category_name = %s", (category_name,))
     result = cursor.fetchone()
