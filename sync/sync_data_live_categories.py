@@ -27,32 +27,42 @@ stream_handler.setFormatter(formatter)
 logging.getLogger().addHandler(file_handler)
 logging.getLogger().addHandler(stream_handler)
 
-# Function to check if category exists in the database, test
-def category_exists(cursor, category_name):
-    cursor.execute("SELECT COUNT(*) FROM stream_categories WHERE category_name = %s", (category_name,))
-    result = cursor.fetchone()
-    return result['COUNT(*)'] > 0
-
 # Function to save data to the stream_categories table
 def save_to_database(data, db_host, db_user, db_password, db_name):
-    cont = 50
     try:
         connection = pymysql.connect(host=db_host,
                                      user=db_user,
                                      password=db_password,
                                      database=db_name,
                                      cursorclass=pymysql.cursors.DictCursor)
-
+ 
         with connection.cursor() as cursor:
+            # Get the current max cat_order to increment from there
+            cursor.execute("SELECT MAX(cat_order) as max_order FROM stream_categories")
+            result = cursor.fetchone()
+            cont = result['max_order'] if result and result['max_order'] is not None else 0
+ 
             for category in data:
-                if not category_exists(cursor, category['category_name']):
-                    cursor.execute("INSERT INTO stream_categories (id, category_name, parent_id, cat_order) VALUES (%s, %s, %s, %s)",
-                                   (int(category['category_id']), category['category_name'], category['parent_id'], cont + 1))
-                    print("Category saved: {}, Category ID: {}".format(category['category_name'], category['category_id']))
-
+                category_id = int(category['category_id'])
+                category_name = category['category_name']
+                parent_id = category['parent_id']
+ 
+                cursor.execute("SELECT id, category_name FROM stream_categories WHERE id = %s", (category_id,))
+                existing_category = cursor.fetchone()
+ 
+                if existing_category:
+                    # Update if name is different
+                    if existing_category['category_name'] != category_name:
+                        cursor.execute("UPDATE stream_categories SET category_name = %s WHERE id = %s", (category_name, category_id))
+                        logging.info(f"Category updated: {category_name}, Category ID: {category_id}")
+                else:
+                    # Insert new category
+                    cont += 1
+                    cursor.execute("INSERT INTO stream_categories (id, category_name, parent_id, cat_order) VALUES (%s, %s, %s, %s)", (category_id, category_name, parent_id, cont))
+                    logging.info(f"Category saved: {category_name}, Category ID: {category_id}")
             connection.commit()
     except pymysql.Error as e:
-        print("Error connecting to database:", e)
+        logging.error("Error with database operation: %s", e)
     finally:
         if connection:
             connection.close()
@@ -67,7 +77,7 @@ if __name__ == '__main__':
     USER_NAME = os.getenv("USERNAME")
     PASSWORD = os.getenv("PASSWORD")
 
-    print(USER_NAME, '*******')
+    logging.info(f"Starting category sync for user: {USER_NAME}")
 
     start_time = time.time()
 
@@ -87,9 +97,9 @@ if __name__ == '__main__':
         # Save cleaned data to database
         save_to_database(cleaned_data, DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 
-        print("Data processed and saved successfully.")
+        logging.info("Data processed and saved successfully.")
     else:
-        print("Failed to fetch JSON data. Status code:", response.status_code)
+        logging.error("Failed to fetch JSON data. Status code: %s", response.status_code)
 
     end_time = time.time()
     execution_time = end_time - start_time
@@ -97,7 +107,5 @@ if __name__ == '__main__':
     minutes = int(execution_time // 60)
     seconds = int(execution_time % 60)
 
-    print("Execution time: {} minutes and {} seconds".format(minutes, seconds))
-    
     # Log execution time
     logging.info("Execution time: {} minutes and {} seconds".format(minutes, seconds))
