@@ -72,9 +72,11 @@ if __name__ == '__main__':
     start_time = time.time()
 
     # Fetch JSON data from the provided URL
-    url = 'http://iptvsub1-elite.com/player_api.php?username={}&password={}&action=get_live_categories'.format(USER_NAME, PASSWORD)
-    
-    response = requests.get(url)
+    url = f'http://iptvsub1-elite.com/player_api.php?username={USER_NAME}&password={PASSWORD}&action=get_live_categories'
+    headers = {
+        'User-Agent': 'curl/7.88.1'
+    }
+    response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         json_data = response.json()
