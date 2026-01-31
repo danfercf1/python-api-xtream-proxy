@@ -29,24 +29,18 @@ class Database:
             database=self.database
         )
         
-    def is_expired(user_info_result):
-        # Extract the user_info attribute from the MySQL tuple
-        user_info_json_text = user_info_result["user_info"]
-
-        # Parse the JSON text to a Python dictionary
-        user_info = json.loads(user_info_json_text)
-
-        # Extract the value of the "exp_date" key and convert it to an integer (timestamp)
-        exp_date_timestamp = int(user_info.get("exp_date", 0))
-
-        # Get the current timestamp
-        current_timestamp = int(datetime.now().timestamp())
-
-        # Compare the expiration timestamp with the current timestamp
-        if exp_date_timestamp <= current_timestamp:
-            return True
-        else:
+    @staticmethod
+    def is_expired_user_info(user_info: dict) -> bool:
+        """Return True if exp_date exists and is in the past."""
+        exp = user_info.get("exp_date")
+        if exp in (None, "", "0", 0):
             return False
+        try:
+            exp_date_timestamp = int(exp)
+        except Exception:
+            return False
+        current_timestamp = int(datetime.now().timestamp())
+        return exp_date_timestamp <= current_timestamp
     
     # Esta función verifica si un usuario existe en la base de datos
 
@@ -65,6 +59,15 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
+                # Avoid duplicates if the same user already exists.
+                try:
+                    cursor.execute("SELECT id FROM users WHERE username = %s AND password = %s", (username, password))
+                    existing = cursor.fetchone()
+                except Exception:
+                    existing = None
+                if existing:
+                    return existing[0]
+
                 sql = "INSERT INTO users (username, password) VALUES (%s, %s)"
                 cursor.execute(sql, (username, password))
                 # Obtener el ID del usuario insertado
@@ -78,9 +81,15 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s AND status = 'Active'"
-                cursor.execute(sql, (user, passw,))
-                result = cursor.fetchone()
+                # Prefer enforcing status if the column exists, but fall back gracefully.
+                try:
+                    sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s AND status = 'Active'"
+                    cursor.execute(sql, (user, passw,))
+                    result = cursor.fetchone()
+                except pymysql.err.OperationalError:
+                    sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s"
+                    cursor.execute(sql, (user, passw,))
+                    result = cursor.fetchone()
                 if result:
                     id, username, password = result
                     return {"id": id, "username": username, "password": password}
@@ -152,7 +161,7 @@ class Database:
                     url = cursor.fetchone()[0]
                     return url
                 except:
-                    return 'http://iptvsub1-elite.com'
+                    return 'http://m3u.star4k.me'
         finally:
             connection.close()
 
@@ -161,8 +170,12 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM stream_categories WHERE status = 'Active' ORDER BY cat_order ASC"
-                cursor.execute(sql)
+                try:
+                    sql = "SELECT * FROM stream_categories WHERE status = 'Active' ORDER BY cat_order ASC"
+                    cursor.execute(sql)
+                except pymysql.err.OperationalError:
+                    sql = "SELECT * FROM stream_categories ORDER BY cat_order ASC"
+                    cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
                 # Formatear los resultados como una lista de diccionarios
@@ -182,9 +195,14 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
-                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' ORDER BY st.name ASC"
-                cursor.execute(sql)
+                try:
+                    sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                    sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' ORDER BY st.name ASC"
+                    cursor.execute(sql)
+                except pymysql.err.OperationalError:
+                    sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                    sql += " ORDER BY st.name ASC"
+                    cursor.execute(sql)
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
                 # Formatear los resultados como una lista de diccionarios
@@ -215,9 +233,14 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
-                sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
-                sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' AND category_id = %s ORDER BY st.name ASC"
-                cursor.execute(sql, (category_id,))
+                try:
+                    sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                    sql += " WHERE st.status = 'Active' AND st_cat.status = 'Active' AND category_id = %s ORDER BY st.name ASC"
+                    cursor.execute(sql, (category_id,))
+                except pymysql.err.OperationalError:
+                    sql = "SELECT * FROM streams as st INNER JOIN stream_categories as st_cat ON st.category_id = st_cat.id"
+                    sql += " WHERE category_id = %s ORDER BY st.name ASC"
+                    cursor.execute(sql, (category_id,))
                 # Obtener todos los resultados de la consulta
                 results = cursor.fetchall()
                 # Formatear los resultados como una lista de diccionarios

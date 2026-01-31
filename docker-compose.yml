@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   api:
     build: .
@@ -37,10 +35,11 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       # - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql  # Monta el script SQL como un entrypoint para inicializar la base de datos
-      - mariadb_data:/var/lib/mysql  # Agrega un volumen para persistir los datos de la base de datos
+      - python-api-xtream-proxy_mariadb_data:/var/lib/mysql  # Agrega un volumen para persistir los datos de la base de datos
 
 volumes:
-  mariadb_data:  # Define el volumen para persistir los datos de la base de datos
+  python-api-xtream-proxy_mariadb_data: # Define el volumen para persistir los datos de la base de datos
+    external: true
 
 networks:
   default:
