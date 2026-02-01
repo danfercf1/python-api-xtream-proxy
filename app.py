@@ -3,10 +3,14 @@ import os
 import time
 from threading import Lock
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
+from dotenv import load_dotenv
 from database import Database
 from api import Api
 
 #  TODO EPG action=get_simple_data_table&stream_id=id Perfect player APP
+
+# Load local .env if present (does not override existing env vars)
+load_dotenv()
 
 app = Flask(__name__)
 db = Database(app)

@@ -95,7 +95,6 @@ CREATE TABLE IF NOT EXISTS server_dns (
 -- Insertar servidores DNS
 INSERT INTO server_dns (dns_url)
 VALUES
-('http://iptvsub1-elite.com'),
 ('http://m3u.smartvent.me'),
 ('http://m3u.zen-ott.me'),
 ('http://m3u.star4k.me');

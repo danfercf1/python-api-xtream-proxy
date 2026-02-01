@@ -15,3 +15,10 @@ secrets.txt
 Dockerfile
 .env
 *.log
+
+insomnia-import.json
+
+/mysql_backups/*
+
+insomnia-import.json
+.venv/

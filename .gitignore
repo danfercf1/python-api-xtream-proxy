@@ -161,3 +161,4 @@ cython_debug/
 
 mysql_backups/*.sql
 xml/*.xml
+insomnia-import.json

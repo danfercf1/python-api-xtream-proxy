@@ -2,6 +2,11 @@ import os
 import json
 import pymysql
 from datetime import datetime
+import random
+from dotenv import load_dotenv
+
+# Load local .env if present (does not override existing env vars)
+load_dotenv()
 
 # Obtener las variables de entorno
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
@@ -152,16 +157,30 @@ class Database:
 
     # Esta función obtiene una URL aleatoria de la tabla server_dns
     def get_dns_url_random(self):
+        dns_urls = self.get_dns_urls()
+        if not dns_urls:
+            return "http://m3u.star4k.me"
+        return random.choice(dns_urls)
+
+    def get_dns_urls(self):
+        """Return a list of DNS URLs from server_dns.
+
+        Prefers filtering only Active DNS rows if the schema supports it, but remains compatible
+        with older schemas that don't have a 'status' column.
+        """
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
                 try:
-                    sql = "SELECT dns_url FROM server_dns ORDER BY RAND() LIMIT 1"
-                    cursor.execute(sql)
-                    url = cursor.fetchone()[0]
-                    return url
-                except:
-                    return 'http://m3u.star4k.me'
+                    try:
+                        cursor.execute("SELECT dns_url FROM server_dns WHERE status = 'Active'")
+                    except pymysql.err.OperationalError:
+                        cursor.execute("SELECT dns_url FROM server_dns")
+                    rows = cursor.fetchall() or []
+                    # rows is a tuple-of-tuples: ((url1,), (url2,), ...)
+                    return [r[0] for r in rows if r and r[0]]
+                except Exception:
+                    return []
         finally:
             connection.close()
 
