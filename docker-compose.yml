@@ -6,7 +6,6 @@ services:
       - "${PORT}:5000"  # El puerto puede ser configurado con una variable de entorno
       # - "3000:3000"  # Puerto de depuración
     environment:
-      # - DEBUG=true  # Variable de entorno para habilitar el modo de depuración
       - PORT=${PORT}
       - MYSQL_HOST=${MYSQL_HOST}
       - MYSQL_USER=${MYSQL_USER}
@@ -15,19 +14,28 @@ services:
       - SERVER_IP=${SERVER_IP}
       - USERNAME=${USERNAME}
       - PASSWORD=${PASSWORD}
-      # - FLASK_ENV=development
+      - RATE_LIMIT_PLAYER_API_PER_MINUTE=${RATE_LIMIT_PLAYER_API_PER_MINUTE:-30}
+      - RATE_LIMIT_REDIRECT_PER_MINUTE=${RATE_LIMIT_REDIRECT_PER_MINUTE:-120}
+      - TRUST_PROXY_HEADERS=${TRUST_PROXY_HEADERS:-false}
     volumes:
       - ./xml:/app/xml
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     dns:
       - 8.8.8.8
 
   mariadb:
-    image: mariadb:latest
+    image: mariadb:11.4
     # ports:
     #   - "3306:3306" # Only enabled on development
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
