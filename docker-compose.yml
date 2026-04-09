@@ -47,32 +47,7 @@ services:
     networks:
       default:
         aliases:
-          - mariadb  # Alias for Django to connect
-
-  django_admin:
-    build:
-      context: ./django_admin
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      - DB_NAME=${DJANGO_DB_NAME}
-      - DB_USER=${DJANGO_DB_USER}
-      - DB_PASSWORD=${DJANGO_DB_PASSWORD}
-      - DB_HOST=mariadb  # Uses the alias
-      - DB_PORT=3306
-      - SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DEBUG=${DJANGO_DEBUG:-false}
-      - API_INTERNAL_TOKEN=${API_INTERNAL_TOKEN}
-    depends_on:
-      mariadb:
-        condition: service_healthy
-    volumes:
-      - ./django_admin:/app
-    command: python manage.py runserver 0.0.0.0:8000
-    networks:
-      default:
-        aliases:
-          - django_admin  # Alias for nginx to connect
+          - mariadb  # Alias for Django to connect (Django is in separate project)
 
 volumes:
   python-api-xtream-proxy_mariadb_data: # Define el volumen para persistir los datos de la base de datos
