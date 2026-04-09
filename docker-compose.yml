@@ -47,7 +47,7 @@ services:
     networks:
       default:
         aliases:
-          - mariadb  # Alias for Django to connect (Django is in separate project)
+          - mariadb_xtream  # Unique alias for Django to connect
 
 volumes:
   python-api-xtream-proxy_mariadb_data: # Define el volumen para persistir los datos de la base de datos
