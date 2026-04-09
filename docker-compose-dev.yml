@@ -15,9 +15,19 @@ services:
       - SERVER_IP=${SERVER_IP}
       - USERNAME=${USERNAME}
       - PASSWORD=${PASSWORD}
+      - AUDIT_LOG_ENABLED=${AUDIT_LOG_ENABLED:-true}
+      - PROXY_MODE_ENABLED=${PROXY_MODE_ENABLED:-false}
+      - ENABLE_PASSWORD_ENCRYPTION=${ENABLE_PASSWORD_ENCRYPTION:-true}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       # - FLASK_ENV=development
     volumes:
-      - ./xml:/app/xml
+      - ./xml:/app/xml:ro  # Security: Read-only mount for xml files
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
       - mariadb
     dns:

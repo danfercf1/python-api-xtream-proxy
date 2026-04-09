@@ -4,6 +4,7 @@ import pymysql
 from datetime import datetime
 import random
 from dotenv import load_dotenv
+from crypto_utils import PasswordCipher
 
 # Load local .env if present (does not override existing env vars)
 load_dotenv()
@@ -15,6 +16,15 @@ MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
 MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
 PORT = os.environ.get('PORT')
 SERVER_IP = os.environ.get('SERVER_IP')
+
+# Password encryption configuration
+ENABLE_PASSWORD_ENCRYPTION = os.environ.get('ENABLE_PASSWORD_ENCRYPTION', 'true').strip().lower() in {'1', 'true', 't', 'yes', 'y', 'on'}
+
+# Initialize cipher lazily
+def get_cipher():
+    if not hasattr(get_cipher, '_instance'):
+        get_cipher._instance = PasswordCipher()
+    return get_cipher._instance
 
 class Database:
     def __init__(self, app):
@@ -49,14 +59,37 @@ class Database:
     
     # Esta función verifica si un usuario existe en la base de datos
 
+    def _encrypt_password(self, password: str) -> str:
+        """Encrypt password if encryption is enabled."""
+        if not ENABLE_PASSWORD_ENCRYPTION:
+            return password
+        return get_cipher().encrypt(password)
+    
+    def _decrypt_password(self, password: str) -> str:
+        """Decrypt password if encryption is enabled."""
+        if not ENABLE_PASSWORD_ENCRYPTION:
+            return password
+        return get_cipher().decrypt(password)
+
     def user_exists(self, username, password):
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
+                # First try exact match (for new encrypted passwords)
                 sql = "SELECT * FROM users WHERE username = %s AND password = %s"
-                cursor.execute(sql, (username, password,))
+                encrypted_pw = self._encrypt_password(password)
+                cursor.execute(sql, (username, encrypted_pw))
                 result = cursor.fetchone()
-                return result is not None
+                if result:
+                    return True
+                
+                # Fall back to plaintext match (for legacy passwords)
+                cursor.execute(sql, (username, password))
+                result = cursor.fetchone()
+                if result:
+                    return True
+                    
+                return False
         finally:
             connection.close()
 
@@ -64,9 +97,12 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
+                # Encrypt password before saving
+                encrypted_password = self._encrypt_password(password)
+                
                 # Avoid duplicates if the same user already exists.
                 try:
-                    cursor.execute("SELECT id FROM users WHERE username = %s AND password = %s", (username, password))
+                    cursor.execute("SELECT id FROM users WHERE username = %s AND password = %s", (username, encrypted_password))
                     existing = cursor.fetchone()
                 except Exception:
                     existing = None
@@ -74,7 +110,7 @@ class Database:
                     return existing[0]
 
                 sql = "INSERT INTO users (username, password) VALUES (%s, %s)"
-                cursor.execute(sql, (username, password))
+                cursor.execute(sql, (username, encrypted_password))
                 # Obtener el ID del usuario insertado
                 user_id = cursor.lastrowid
             connection.commit()
@@ -86,18 +122,29 @@ class Database:
         connection = self.connect()
         try:
             with connection.cursor() as cursor:
+                encrypted_passw = self._encrypt_password(passw)
+                
                 # Prefer enforcing status if the column exists, but fall back gracefully.
                 try:
                     sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s AND status = 'Active'"
-                    cursor.execute(sql, (user, passw,))
+                    cursor.execute(sql, (user, encrypted_passw))
                     result = cursor.fetchone()
+                    # Try plaintext for legacy
+                    if not result:
+                        cursor.execute(sql, (user, passw))
+                        result = cursor.fetchone()
                 except pymysql.err.OperationalError:
                     sql = "SELECT id,username,password FROM users WHERE username = %s AND password = %s"
-                    cursor.execute(sql, (user, passw,))
+                    cursor.execute(sql, (user, encrypted_passw))
                     result = cursor.fetchone()
+                    # Try plaintext for legacy
+                    if not result:
+                        cursor.execute(sql, (user, passw))
+                        result = cursor.fetchone()
                 if result:
                     id, username, password = result
-                    return {"id": id, "username": username, "password": password}
+                    # Return decrypted password for upstream authentication
+                    return {"id": id, "username": username, "password": self._decrypt_password(password)}
                 else:
                     return None
         finally:

@@ -22,6 +22,7 @@ load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / ".env", override=_
 # Allow overriding DNS URL(s) for testing (comma-separated)
 DNS_URL_OVERRIDE = os.getenv("DNS_URL", "").strip()
 ENABLE_M3U_FALLBACK = os.getenv("ENABLE_M3U_FALLBACK", "0").strip().lower() in {"1", "true", "yes", "on"}
+SSL_VERIFY_UPSTREAM = os.getenv("SSL_VERIFY_UPSTREAM", "false").strip().lower() in {"1", "true", "t", "yes", "y", "on"}
 
 def _env_bool(name: str, default: bool = False) -> bool:
     raw = os.getenv(name)
@@ -169,7 +170,7 @@ if __name__ == '__main__':
         try:
             if SYNC_DEBUG:
                 logger.debug("GET %s", url.replace(PASSWORD or "", "***"))
-            response = requests.get(url, headers=headers, timeout=UPSTREAM_TIMEOUT_SECONDS, allow_redirects=True, verify=False)
+            response = requests.get(url, headers=headers, timeout=UPSTREAM_TIMEOUT_SECONDS, allow_redirects=True, verify=SSL_VERIFY_UPSTREAM)
             if response.status_code == 200:
                 logger.info("Upstream OK from %s (200)", dns_url)
                 break
@@ -196,7 +197,7 @@ if __name__ == '__main__':
             m3u_url = f"{dns_url}/get.php?username={USER_NAME}&password={PASSWORD}&type=m3u_plus&output=ts"
             try:
                 logging.info("Falling back to M3U from: %s", dns_url)
-                m3u_resp = requests.get(m3u_url, headers=headers, timeout=30, allow_redirects=True, verify=False)
+                m3u_resp = requests.get(m3u_url, headers=headers, timeout=30, allow_redirects=True, verify=SSL_VERIFY_UPSTREAM)
                 if m3u_resp.status_code != 200:
                     logging.warning("Non-200 M3U from %s: %s", dns_url, m3u_resp.status_code)
                     continue

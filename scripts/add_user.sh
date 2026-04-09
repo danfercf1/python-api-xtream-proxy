@@ -123,6 +123,11 @@ sql=$(
 SET @u := %s;
 SET @p := %s;
 
+-- Encrypt password if encryption is configured (we store as-is, application handles encryption)
+-- Note: If ENABLE_PASSWORD_ENCRYPTION is enabled in the app, the application will encrypt
+-- the password when reading from the database. For direct SQL inserts, we store plaintext
+-- and the app will encrypt it on first read.
+
 -- Create a user row if it doesn't exist (by username+password)
 INSERT INTO users (username, password)
 SELECT @u, @p

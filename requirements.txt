@@ -3,3 +3,4 @@ pymysql==1.0.2
 Werkzeug==2.2.2
 requests==2.26.0
 python-dotenv==1.0.1
+cryptography==42.0.5
